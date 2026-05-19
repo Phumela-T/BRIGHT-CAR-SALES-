@@ -1,0 +1,789 @@
+--01 loading the cleaned table---
+SELECT *
+FROM workspace.default.car_sales_data_cleaned
+LIMIT 1000;
+
+
+----02 COUNT TOTAL ROWS---
+SELECT COUNT(*) AS total_rows
+FROM workspace.default.car_sales_data_cleaned;
+
+--03 Minimum and Maximum Year--
+SELECT MIN(year) AS min_year, MAX(year) AS max_year
+FROM workspace.default.car_sales_data_cleaned;
+
+
+--04 Minimum and Maximum Odometer 
+SELECT MIN(odometer) AS min_odometer, MAX(odometer) AS max_odometer
+FROM workspace.default.car_sales_data_cleaned;
+
+
+--05 Minimum and Maximum MMR--)
+SELECT MIN(mmr) AS min_mmr, MAX(mmr) AS max_mmr
+FROM workspace.default.car_sales_data_cleaned;
+
+
+--06 Minimum and Maximum Selling Price
+SELECT MIN(sellingprice) AS min_sellingprice, MAX(sellingprice) AS max_sellingprice
+FROM workspace.default.car_sales_data_cleaned;
+
+
+
+---07 Minimum and Maximum Sale Date---
+SELECT
+MIN(sale_timestamp) AS min_sale_timestamp,
+MAX(sale_timestamp) AS max_sale_timestamp
+FROM workspace.default.car_sales_data_cleaned;
+
+
+
+--08 Categorise cars by performance tiers (High Margin, Medium Margin, Low Margin)
+SELECT
+*,
+(sellingprice - mmr) AS price_difference,
+CASE
+WHEN (sellingprice - mmr) < 1000 THEN 'Low Margin'
+WHEN (sellingprice - mmr) BETWEEN 1001 AND 2500 THEN 'Medium Margin'
+WHEN (sellingprice - mmr) BETWEEN 2501 AND 4000 THEN 'High Margin'
+ELSE 'Unknown'
+END AS performance_tier
+FROM workspace.default.car_sales_data_cleaned
+LIMIT 1000;
+
+
+
+----09 Group transactions by month 
+SELECT
+YEAR(sale_timestamp) AS sale_year,
+MONTH(sale_timestamp) AS sale_month,
+COUNT(*) AS transactions_count,
+SUM(sellingprice) AS total_sales
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY YEAR(sale_timestamp), MONTH(sale_timestamp)
+ORDER BY sale_year, sale_month;
+
+
+
+--10 Group transactions by quarter
+SELECT
+YEAR(sale_timestamp) AS sale_year,
+QUARTER(sale_timestamp) AS sale_quarter,
+COUNT(*) AS transactions_count,
+SUM(sellingprice) AS total_sales
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY YEAR(sale_timestamp), QUARTER(sale_timestamp)
+ORDER BY sale_year, sale_quarter;
+
+
+
+--11 Group transactions by year
+SELECT
+YEAR(sale_timestamp) AS sale_year,
+COUNT(*) AS transactions_count,
+SUM(sellingprice) AS total_sales
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY YEAR(sale_timestamp)
+ORDER BY sale_year;
+
+
+
+--12 Revenue by Make & Model
+SELECT
+make,
+model,
+SUM(sellingprice) AS total_revenue,
+COUNT(*) AS units_sold
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY make, model
+ORDER BY total_revenue DESC;
+
+
+---13 state name changed to Region_Name:
+
+SELECT
+CASE
+WHEN lower(state) = 'ca' THEN 'California'
+WHEN lower(state) = 'tx' THEN 'Texas'
+WHEN lower(state) = 'ny' THEN 'New York'
+WHEN lower(state) = 'fl' THEN 'Florida'
+WHEN lower(state) = 'il' THEN 'Illinois'
+WHEN lower(state) = 'pa' THEN 'Pennsylvania'
+WHEN lower(state) = 'oh' THEN 'Ohio'
+WHEN lower(state) = 'ga' THEN 'Georgia'
+WHEN lower(state) = 'nc' THEN 'North Carolina'
+WHEN lower(state) = 'mi' THEN 'Michigan'
+-- Add more state mappings as needed
+ELSE state
+END AS Region_Name,
+SUM(sellingprice) AS total_revenue,
+COUNT(*) AS units_sold
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY Region_Name
+ORDER BY total_revenue DESC;
+
+
+
+
+--14 Fuel Type Distribution
+SELECT
+body AS fuel_type,
+COUNT(*) AS count
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY body
+ORDER BY count DESC;
+
+
+--15 High vs Low Volume Sales
+SELECT
+make,
+model,
+COUNT(*) AS units_sold,
+CASE
+WHEN COUNT(*) >= 100 THEN 'High Volume'
+ELSE 'Low Volume'
+END AS volume_category
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY make, model
+ORDER BY units_sold DESC;
+
+
+
+--16 Count unique values for categorical columns
+SELECT
+COUNT(DISTINCT make) AS unique_makes,
+COUNT(DISTINCT model) AS unique_models,
+COUNT(DISTINCT body) AS unique_body_types,
+COUNT(DISTINCT transmission) AS unique_transmissions,
+COUNT(DISTINCT state) AS unique_states,
+COUNT(DISTINCT color) AS unique_colors,
+COUNT(DISTINCT seller) AS unique_sellers
+FROM workspace.default.car_sales_data_cleaned;
+
+
+
+--17 Top 10 most profitable car models
+SELECT
+make,
+model,
+AVG(sellingprice - mmr) AS avg_profit_margin,
+COUNT(*) AS units_sold,
+SUM(sellingprice - mmr) AS total_profit
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY make, model
+HAVING COUNT(*) >= 5
+ORDER BY avg_profit_margin DESC
+LIMIT 10;
+
+
+--18 Top 10 best-selling makes
+SELECT
+make,
+COUNT(*) AS units_sold,
+SUM(sellingprice) AS total_revenue,
+AVG(sellingprice) AS avg_price
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY make
+ORDER BY units_sold DESC
+LIMIT 10;
+
+
+
+
+--19 Top 10 best-selling makes
+SELECT
+make,
+COUNT(*) AS units_sold,
+SUM(sellingprice) AS total_revenue,
+AVG(sellingprice) AS avg_price
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY make
+ORDER BY units_sold DESC
+LIMIT 10;
+
+
+
+
+--20 Sales by transmission type
+SELECT
+transmission,
+COUNT(*) AS units_sold,
+SUM(sellingprice) AS total_revenue,
+AVG(sellingprice) AS avg_price,
+AVG(sellingprice - mmr) AS avg_profit_margin
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY transmission
+ORDER BY units_sold DESC;
+
+
+
+
+
+--21 Sales by body type
+SELECT
+body,
+COUNT(*) AS units_sold,
+SUM(sellingprice) AS total_revenue,
+AVG(sellingprice) AS avg_price
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY body
+ORDER BY units_sold DESC;
+
+
+--22 Most popular car colors
+SELECT
+color,
+COUNT(*) AS units_sold,
+AVG(sellingprice) AS avg_price
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY color
+ORDER BY units_sold DESC
+LIMIT 10;
+
+
+
+
+
+--23 Price vs odometer reading categories
+SELECT
+CASE
+WHEN odometer < 30000 THEN '0-30K miles'
+WHEN odometer BETWEEN 30000 AND 60000 THEN '30K-60K miles'
+WHEN odometer BETWEEN 60001 AND 100000 THEN '60K-100K miles'
+WHEN odometer > 100000 THEN '100K+ miles'
+END AS odometer_range,
+COUNT(*) AS units_sold,
+AVG(sellingprice) AS avg_price,
+AVG(sellingprice - mmr) AS avg_profit_margin
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY
+CASE
+WHEN odometer < 30000 THEN '0-30K miles'
+WHEN odometer BETWEEN 30000 AND 60000 THEN '30K-60K miles'
+WHEN odometer BETWEEN 60001 AND 100000 THEN '60K-100K miles'
+WHEN odometer > 100000 THEN '100K+ miles'
+END
+ORDER BY avg_price DESC;
+
+
+
+--24 Top performing sellers
+SELECT
+seller,
+COUNT(*) AS units_sold,
+SUM(sellingprice) AS total_revenue
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY seller
+ORDER BY total_revenue DESC
+LIMIT 10;
+
+
+
+
+
+--25 Sales by car age
+SELECT
+YEAR(CURRENT_DATE()) - year AS car_age,
+COUNT(*) AS units_sold,
+AVG(sellingprice) AS avg_price,
+AVG(odometer) AS avg_odometer
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY YEAR(CURRENT_DATE()) - year
+ORDER BY car_age;
+
+
+
+
+--26 Market Share by Brand
+SELECT
+make AS brand,
+COUNT(*) AS units_sold,
+ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) AS market_share_percent
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY make
+ORDER BY market_share_percent DESC;
+
+
+
+
+
+--27 Most Popular Fuel Type by State
+SELECT
+state,
+body AS fuel_type,
+COUNT(*) AS units_sold
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY state, body
+QUALIFY ROW_NUMBER() OVER (PARTITION BY state ORDER BY units_sold DESC) = 1
+ORDER BY state;
+
+
+
+
+--28 Best Sales Month
+SELECT
+YEAR(sale_timestamp) AS sale_year,
+MONTH(sale_timestamp) AS sale_month,
+SUM(sellingprice) AS total_sales
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY YEAR(sale_timestamp), MONTH(sale_timestamp)
+ORDER BY total_sales DESC
+LIMIT 1;
+
+
+
+--29 Average Revenue per Unit
+SELECT
+AVG(sellingprice) AS avg_revenue_per_unit
+FROM workspace.default.car_sales_data_cleaned;
+
+
+
+
+--30 Profit Contribution by State
+SELECT
+state,
+SUM(sellingprice - mmr) AS total_profit,
+COUNT(*) AS units_sold,
+ROUND(100.0 * SUM(sellingprice - mmr) / SUM(SUM(sellingprice - mmr)) OVER (), 2) AS profit_contribution_percent
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY state
+ORDER BY total_profit DESC;
+
+
+
+--31 Monthly Sales Trend
+SELECT
+DATE_TRUNC('month', sale_timestamp) AS sale_month,
+SUM(sellingprice) AS total_revenue,
+COUNT(*) AS units_sold,
+AVG(sellingprice) AS avg_price
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY DATE_TRUNC('month', sale_timestamp)
+ORDER BY sale_month;
+
+
+
+32 Price vs Odometer Scatter Plot Data
+SELECT
+odometer,
+sellingprice,
+year,
+make
+FROM workspace.default.car_sales_data_cleaned
+WHERE odometer IS NOT NULL
+AND sellingprice IS NOT NULL
+LIMIT 1000;
+
+
+
+
+
+--33 Year-over-Year Growth
+WITH yearly_sales AS (
+SELECT
+YEAR(sale_timestamp) AS sale_year,
+SUM(sellingprice) AS total_revenue,
+COUNT(*) AS units_sold
+FROM workspace.default.car_sales_data_cleaned
+GROUP BY YEAR(sale_timestamp)
+)
+SELECT
+sale_year,
+total_revenue,
+units_sold,
+LAG(total_revenue) OVER (ORDER BY sale_year) AS prev_year_revenue,
+ROUND(100.0 * (total_revenue - LAG(total_revenue) OVER (ORDER BY sale_year)) / LAG(total_revenue) OVER (ORDER BY sale_year), 2) AS revenue_growth_pct
+FROM yearly_sales
+ORDER BY sale_year;
+
+
+
+
+- ===================================================================
+-- COMPREHENSIVE AGGREGATED QUERY FOR FINAL EXPORT
+-- ===================================================================
+-- ===================================================================
+
+SELECT
+-- Transaction Details
+year,
+make,
+model,
+trim,
+body,
+transmission,
+state,
+CASE
+WHEN UPPER(state) = 'AB' THEN 'Alberta'
+WHEN UPPER(state) = 'AL' THEN 'Alabama'
+WHEN UPPER(state) = 'AZ' THEN 'Arizona'
+WHEN UPPER(state) = 'CA' THEN 'California'
+WHEN UPPER(state) = 'CO' THEN 'Colorado'
+WHEN UPPER(state) = 'FL' THEN 'Florida'
+WHEN UPPER(state) = 'GA' THEN 'Georgia'
+WHEN UPPER(state) = 'HI' THEN 'Hawaii'
+WHEN UPPER(state) = 'IL' THEN 'Illinois'
+WHEN UPPER(state) = 'IN' THEN 'Indiana'
+WHEN UPPER(state) = 'LA' THEN 'Louisiana'
+WHEN UPPER(state) = 'MA' THEN 'Massachusetts'
+WHEN UPPER(state) = 'MD' THEN 'Maryland'
+WHEN UPPER(state) = 'MI' THEN 'Michigan'
+WHEN UPPER(state) = 'MN' THEN 'Minnesota'
+WHEN UPPER(state) = 'MO' THEN 'Missouri'
+WHEN UPPER(state) = 'MS' THEN 'Mississippi'
+WHEN UPPER(state) = 'NC' THEN 'North Carolina'
+WHEN UPPER(state) = 'NE' THEN 'Nebraska'
+WHEN UPPER(state) = 'NJ' THEN 'New Jersey'
+WHEN UPPER(state) = 'NM' THEN 'New Mexico'
+WHEN UPPER(state) = 'NS' THEN 'Nova Scotia'
+WHEN UPPER(state) = 'NV' THEN 'Nevada'
+WHEN UPPER(state) = 'NY' THEN 'New York'
+WHEN UPPER(state) = 'OH' THEN 'Ohio'
+WHEN UPPER(state) = 'OK' THEN 'Oklahoma'
+WHEN UPPER(state) = 'ON' THEN 'Ontario'
+WHEN UPPER(state) = 'OR' THEN 'Oregon'
+WHEN UPPER(state) = 'PA' THEN 'Pennsylvania'
+WHEN UPPER(state) = 'PR' THEN 'Puerto Rico'
+WHEN UPPER(state) = 'QC' THEN 'Quebec'
+WHEN UPPER(state) = 'SC' THEN 'South Carolina'
+WHEN UPPER(state) = 'TN' THEN 'Tennessee'
+WHEN UPPER(state) = 'TX' THEN 'Texas'
+WHEN UPPER(state) = 'UT' THEN 'Utah'
+WHEN UPPER(state) = 'VA' THEN 'Virginia'
+WHEN UPPER(state) = 'WA' THEN 'Washington'
+WHEN UPPER(state) = 'WI' THEN 'Wisconsin'
+ELSE state
+END AS region_name,
+color,
+seller,
+
+-- Time Dimensions
+YEAR(sale_timestamp) AS sale_year,
+QUARTER(sale_timestamp) AS sale_quarter,
+MONTH(sale_timestamp) AS sale_month,
+DATE_TRUNC('month', sale_timestamp) AS sale_month_date,
+YEAR(CURRENT_DATE()) - year AS car_age,
+
+-- Price & Financial Metrics
+sellingprice,
+mmr,
+sellingprice - mmr AS profit_margin,
+ROUND((sellingprice - mmr) / NULLIF(mmr, 0) * 100, 2) AS profit_margin_percent,
+
+-- Odometer Categories
+odometer,
+CASE
+WHEN odometer < 30000 THEN '0-30K miles'
+WHEN odometer BETWEEN 30000 AND 60000 THEN '30K-60K miles'
+WHEN odometer BETWEEN 60001 AND 100000 THEN '60K-100K miles'
+WHEN odometer > 100000 THEN '100K+ miles'
+ELSE 'Unknown'
+END AS odometer_range,
+
+-- Performance Tier
+CASE
+WHEN (sellingprice - mmr) < 1000 THEN 'Low Margin'
+WHEN (sellingprice - mmr) BETWEEN 1001 AND 2500 THEN 'Medium Margin'
+WHEN (sellingprice - mmr) BETWEEN 2501 AND 4000 THEN 'High Margin'
+ELSE 'Very High Margin'
+END AS performance_tier,
+
+-- Volume Category
+CASE
+WHEN COUNT(*) OVER (PARTITION BY make, model) >= 100 THEN 'High Volume'
+ELSE 'Low Volume'
+END AS volume_category,
+
+-- Aggregated Metrics by Make & Model
+COUNT(*) OVER (PARTITION BY make, model) AS model_total_units,
+SUM(sellingprice) OVER (PARTITION BY make, model) AS model_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY make, model) AS model_avg_price,
+AVG(sellingprice - mmr) OVER (PARTITION BY make, model) AS model_avg_profit,
+
+-- Aggregated Metrics by State
+COUNT(*) OVER (PARTITION BY state) AS state_total_units,
+SUM(sellingprice) OVER (PARTITION BY state) AS state_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY state) AS state_avg_price,
+
+-- Aggregated Metrics by Year
+COUNT(*) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_total_units,
+SUM(sellingprice) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_avg_price,
+
+-- Aggregated Metrics by Body Type
+COUNT(*) OVER (PARTITION BY body) AS body_total_units,
+SUM(sellingprice) OVER (PARTITION BY body) AS body_total_revenue,
+
+-- Aggregated Metrics by Transmission
+COUNT(*) OVER (PARTITION BY transmission) AS transmission_total_units,
+SUM(sellingprice) OVER (PARTITION BY transmission) AS transmission_total_revenue,
+
+-- Market Share Calculations
+ROUND(100.0 * COUNT(*) OVER (PARTITION BY make) / COUNT(*) OVER (), 2) AS brand_market_share_percent,
+ROUND(100.0 * COUNT(*) OVER (PARTITION BY state) / COUNT(*) OVER (), 2) AS state_market_share_percent,
+
+-- Ranking Metrics
+ROW_NUMBER() OVER (PARTITION BY make ORDER BY sellingprice DESC) AS price_rank_within_make,
+ROW_NUMBER() OVER (PARTITION BY state ORDER BY sellingprice DESC) AS price_rank_within_state,
+ROW_NUMBER() OVER (ORDER BY sellingprice DESC) AS overall_price_rank,
+
+-- Grand Totals
+COUNT(*) OVER () AS grand_total_units,
+SUM(sellingprice) OVER () AS grand_total_revenue,
+AVG(sellingprice) OVER () AS grand_avg_price,
+SUM(sellingprice - mmr) OVER () AS grand_total_profit,
+
+-- Timestamp
+sale_timestamp
+
+FROM consultation.default.car_sales_data_cleaned
+ORDER BY sale_timestamp DESC, sellingprice DESC;
+
+
+
+-- ===================================================================
+-- CREATE FINAL TABLE: CAR SALES FINAL
+-- ===================================================================
+-- Save comprehensive aggregated results as a permanent table
+-- ===================================================================
+
+
+SELECT
+year,
+make,
+model,
+trim,
+body,
+transmission,
+state,
+CASE
+WHEN UPPER(state) = 'AB' THEN 'Alberta'
+WHEN UPPER(state) = 'AL' THEN 'Alabama'
+WHEN UPPER(state) = 'AZ' THEN 'Arizona'
+WHEN UPPER(state) = 'CA' THEN 'California'
+WHEN UPPER(state) = 'CO' THEN 'Colorado'
+WHEN UPPER(state) = 'FL' THEN 'Florida'
+WHEN UPPER(state) = 'GA' THEN 'Georgia'
+WHEN UPPER(state) = 'HI' THEN 'Hawaii'
+WHEN UPPER(state) = 'IL' THEN 'Illinois'
+WHEN UPPER(state) = 'IN' THEN 'Indiana'
+WHEN UPPER(state) = 'LA' THEN 'Louisiana'
+WHEN UPPER(state) = 'MA' THEN 'Massachusetts'
+WHEN UPPER(state) = 'MD' THEN 'Maryland'
+WHEN UPPER(state) = 'MI' THEN 'Michigan'
+WHEN UPPER(state) = 'MN' THEN 'Minnesota'
+WHEN UPPER(state) = 'MO' THEN 'Missouri'
+WHEN UPPER(state) = 'MS' THEN 'Mississippi'
+WHEN UPPER(state) = 'NC' THEN 'North Carolina'
+WHEN UPPER(state) = 'NE' THEN 'Nebraska'
+WHEN UPPER(state) = 'NJ' THEN 'New Jersey'
+WHEN UPPER(state) = 'NM' THEN 'New Mexico'
+WHEN UPPER(state) = 'NS' THEN 'Nova Scotia'
+WHEN UPPER(state) = 'NV' THEN 'Nevada'
+WHEN UPPER(state) = 'NY' THEN 'New York'
+WHEN UPPER(state) = 'OH' THEN 'Ohio'
+WHEN UPPER(state) = 'OK' THEN 'Oklahoma'
+WHEN UPPER(state) = 'ON' THEN 'Ontario'
+WHEN UPPER(state) = 'OR' THEN 'Oregon'
+WHEN UPPER(state) = 'PA' THEN 'Pennsylvania'
+WHEN UPPER(state) = 'PR' THEN 'Puerto Rico'
+WHEN UPPER(state) = 'QC' THEN 'Quebec'
+WHEN UPPER(state) = 'SC' THEN 'South Carolina'
+WHEN UPPER(state) = 'TN' THEN 'Tennessee'
+WHEN UPPER(state) = 'TX' THEN 'Texas'
+WHEN UPPER(state) = 'UT' THEN 'Utah'
+WHEN UPPER(state) = 'VA' THEN 'Virginia'
+WHEN UPPER(state) = 'WA' THEN 'Washington'
+WHEN UPPER(state) = 'WI' THEN 'Wisconsin'
+ELSE state
+END AS region_name,
+color,
+seller,
+
+-- Time Dimensions
+YEAR(sale_timestamp) AS sale_year,
+QUARTER(sale_timestamp) AS sale_quarter,
+MONTH(sale_timestamp) AS sale_month,
+DATE_TRUNC('month', sale_timestamp) AS sale_month_date,
+YEAR(CURRENT_DATE()) - year AS car_age,
+
+-- Price & Financial Metrics
+sellingprice,
+mmr,
+sellingprice - mmr AS profit_margin,
+ROUND((sellingprice - mmr) / NULLIF(mmr, 0) * 100, 2) AS profit_margin_percent,
+
+-- Odometer Categories
+odometer,
+CASE
+WHEN odometer < 30000 THEN '0-30K miles'
+WHEN odometer BETWEEN 30000 AND 60000 THEN '30K-60K miles'
+WHEN odometer BETWEEN 60001 AND 100000 THEN '60K-100K miles'
+WHEN odometer > 100000 THEN '100K+ miles'
+ELSE 'Unknown'
+END AS odometer_range,
+
+-- Performance Tier
+CASE
+WHEN (sellingprice - mmr) < 1000 THEN 'Low Margin'
+WHEN (sellingprice - mmr) BETWEEN 1001 AND 2500 THEN 'Medium Margin'
+WHEN (sellingprice - mmr) BETWEEN 2501 AND 4000 THEN 'High Margin'
+ELSE 'Very High Margin'
+END AS performance_tier,
+
+-- Volume Category
+CASE
+WHEN COUNT(*) OVER (PARTITION BY make, model) >= 100 THEN 'High Volume'
+ELSE 'Low Volume'
+END AS volume_category,
+
+-- Aggregated Metrics by Make & Model
+COUNT(*) OVER (PARTITION BY make, model) AS model_total_units,
+SUM(sellingprice) OVER (PARTITION BY make, model) AS model_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY make, model) AS model_avg_price,
+AVG(sellingprice - mmr) OVER (PARTITION BY make, model) AS model_avg_profit,
+
+-- Aggregated Metrics by State
+COUNT(*) OVER (PARTITION BY state) AS state_total_units,
+SUM(sellingprice) OVER (PARTITION BY state) AS state_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY state) AS state_avg_price,
+
+-- Aggregated Metrics by Year
+COUNT(*) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_total_units,
+SUM(sellingprice) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_avg_price,
+
+-- Aggregated Metrics by Body Type
+COUNT(*) OVER (PARTITION BY body) AS body_total_units,
+SUM(sellingprice) OVER (PARTITION BY body) AS body_total_revenue,
+
+-- Aggregated Metrics by Transmission
+COUNT(*) OVER (PARTITION BY transmission) AS transmission_total_units,
+SUM(sellingprice) OVER (PARTITION BY transmission) AS transmission_total_revenue,
+
+-- Market Share Calculations
+ROUND(100.0 * COUNT(*) OVER (PARTITION BY make) / COUNT(*) OVER (), 2) AS brand_market_share_percent,
+ROUND(100.0 * COUNT(*) OVER (PARTITION BY state) / COUNT(*) OVER (), 2) AS state_market_share_percent,
+
+-- Ranking Metrics
+ROW_NUMBER() OVER (PARTITION BY make ORDER BY sellingprice DESC) AS price_rank_within_make,
+ROW_NUMBER() OVER (PARTITION BY state ORDER BY sellingprice DESC) AS price_rank_within_state,
+ROW_NUMBER() OVER (ORDER BY sellingprice DESC) AS overall_price_rank,
+
+-- Grand Totals
+COUNT(*) OVER () AS grand_total_units,
+SUM(sellingprice) OVER () AS grand_total_revenue,
+AVG(sellingprice) OVER () AS grand_avg_price,
+SUM(sellingprice - mmr) OVER () AS grand_total_profit,
+
+-- Timestamp
+sale_timestamp
+
+FROM workspace.default.car_sales_data_cleaned
+ORDER BY sale_timestamp DESC, sellingprice DESC;
+
+
+
+-----Compressing code ----
+
+SELECT
+-- Transaction Details
+year, make, model, trim, body, transmission, state,
+CASE UPPER(state)
+WHEN 'AB' THEN 'Alberta' WHEN 'AL' THEN 'Alabama'
+WHEN 'AZ' THEN 'Arizona' WHEN 'CA' THEN 'California'
+WHEN 'CO' THEN 'Colorado' WHEN 'FL' THEN 'Florida'
+WHEN 'GA' THEN 'Georgia' WHEN 'HI' THEN 'Hawaii'
+WHEN 'IL' THEN 'Illinois' WHEN 'IN' THEN 'Indiana'
+WHEN 'LA' THEN 'Louisiana' WHEN 'MA' THEN 'Massachusetts'
+WHEN 'MD' THEN 'Maryland' WHEN 'MI' THEN 'Michigan'
+WHEN 'MN' THEN 'Minnesota' WHEN 'MO' THEN 'Missouri'
+WHEN 'MS' THEN 'Mississippi' WHEN 'NC' THEN 'North Carolina'
+WHEN 'NE' THEN 'Nebraska' WHEN 'NJ' THEN 'New Jersey'
+WHEN 'NM' THEN 'New Mexico' WHEN 'NS' THEN 'Nova Scotia'
+WHEN 'NV' THEN 'Nevada' WHEN 'NY' THEN 'New York'
+WHEN 'OH' THEN 'Ohio' WHEN 'OK' THEN 'Oklahoma'
+WHEN 'ON' THEN 'Ontario' WHEN 'OR' THEN 'Oregon'
+WHEN 'PA' THEN 'Pennsylvania' WHEN 'PR' THEN 'Puerto Rico'
+WHEN 'QC' THEN 'Quebec' WHEN 'SC' THEN 'South Carolina'
+WHEN 'TN' THEN 'Tennessee' WHEN 'TX' THEN 'Texas'
+WHEN 'UT' THEN 'Utah' WHEN 'VA' THEN 'Virginia'
+WHEN 'WA' THEN 'Washington' WHEN 'WI' THEN 'Wisconsin'
+ELSE state
+END AS region_name,
+color, seller,
+
+-- Time Dimensions
+YEAR(sale_timestamp) AS sale_year, QUARTER(sale_timestamp) AS sale_quarter,
+MONTH(sale_timestamp) AS sale_month, DATE_TRUNC('month', sale_timestamp) AS sale_month_date,
+YEAR(CURRENT_DATE()) - year AS car_age,
+
+-- Price & Financial Metrics
+sellingprice, mmr,
+sellingprice - mmr AS profit_margin,
+ROUND((sellingprice - mmr) / NULLIF(mmr, 0) * 100, 2) AS profit_margin_percent,
+
+-- Odometer
+odometer,
+CASE
+WHEN odometer < 30000 THEN '0-30K miles'
+WHEN odometer BETWEEN 30000 AND 60000 THEN '30K-60K miles'
+WHEN odometer BETWEEN 60001 AND 100000 THEN '60K-100K miles'
+WHEN odometer > 100000 THEN '100K+ miles'
+ELSE 'Unknown'
+END AS odometer_range,
+
+-- Performance Tier
+CASE
+WHEN (sellingprice - mmr) < 1000 THEN 'Low Margin'
+WHEN (sellingprice - mmr) BETWEEN 1001 AND 2500 THEN 'Medium Margin'
+WHEN (sellingprice - mmr) BETWEEN 2501 AND 4000 THEN 'High Margin'
+ELSE 'Very High Margin'
+END AS performance_tier,
+
+-- Volume Category
+CASE WHEN COUNT(*) OVER (PARTITION BY make, model) >= 100 THEN 'High Volume' ELSE 'Low Volume' END AS volume_category,
+
+-- Aggregated Metrics by Make & Model
+COUNT(*) OVER (PARTITION BY make, model) AS model_total_units,
+SUM(sellingprice) OVER (PARTITION BY make, model) AS model_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY make, model) AS model_avg_price,
+AVG(sellingprice - mmr) OVER (PARTITION BY make, model) AS model_avg_profit,
+
+-- Aggregated Metrics by State
+COUNT(*) OVER (PARTITION BY state) AS state_total_units,
+SUM(sellingprice) OVER (PARTITION BY state) AS state_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY state) AS state_avg_price,
+
+-- Aggregated Metrics by Year
+COUNT(*) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_total_units,
+SUM(sellingprice) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_total_revenue,
+AVG(sellingprice) OVER (PARTITION BY YEAR(sale_timestamp)) AS year_avg_price,
+
+-- Aggregated Metrics by Body Type
+COUNT(*) OVER (PARTITION BY body) AS body_total_units,
+SUM(sellingprice) OVER (PARTITION BY body) AS body_total_revenue,
+
+-- Aggregated Metrics by Transmission
+COUNT(*) OVER (PARTITION BY transmission) AS transmission_total_units,
+SUM(sellingprice) OVER (PARTITION BY transmission) AS transmission_total_revenue,
+
+-- Market Share
+ROUND(100.0 * COUNT(*) OVER (PARTITION BY make) / COUNT(*) OVER (), 2) AS brand_market_share_percent,
+ROUND(100.0 * COUNT(*) OVER (PARTITION BY state) / COUNT(*) OVER (), 2) AS state_market_share_percent,
+
+-- Rankings
+ROW_NUMBER() OVER (PARTITION BY make ORDER BY sellingprice DESC) AS price_rank_within_make,
+ROW_NUMBER() OVER (PARTITION BY state ORDER BY sellingprice DESC) AS price_rank_within_state,
+ROW_NUMBER() OVER (ORDER BY sellingprice DESC) AS overall_price_rank,
+
+-- Grand Totals
+COUNT(*) OVER () AS grand_total_units,
+SUM(sellingprice) OVER () AS grand_total_revenue,
+AVG(sellingprice) OVER () AS grand_avg_price,
+SUM(sellingprice - mmr) OVER () AS grand_total_profit,
+
+sale_timestamp
+
+FROM workspace.default.car_sales_data_cleaned_final
+ORDER BY sale_timestamp DESC, sellingprice DESC;
